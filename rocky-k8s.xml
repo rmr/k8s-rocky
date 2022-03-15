@@ -1,0 +1,23 @@
+<network>
+  <name>rocky-k8s</name>
+  <uuid>9a05da12-e96b-47f3-8253-a3a482e445f5</uuid>
+  <forward mode='nat'/>
+  <bridge name='virbr0-k8s' stp='on' delay='0'/>
+  <mac address='52:54:00:0a:cd:22'/>
+  <domain name="rocky.k8s.local" localOnly="no"/>
+  <dns>
+    <host ip='192.168.123.2'>
+      <hostname>master.rocky.k8s.local</hostname>
+    </host>
+    <host ip='192.168.123.3'>
+      <hostname>worker.rocky.k8s.local</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.123.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.123.2' end='192.168.123.254'/>
+      <host mac='52:54:00:4e:8c:84' name='master' ip='192.168.123.2'/>
+      <host mac='52:54:00:d9:ba:fe' name='worker' ip='192.168.123.3'/>
+    </dhcp>
+  </ip>
+</network>
