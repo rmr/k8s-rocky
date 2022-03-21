@@ -11,7 +11,7 @@ out_dir=${1:-$base}
 
 init() {
   if [ ! -e $out_dir/rocky.iso ] ; then
-    curl -sL https://download.rockylinux.org/pub/rocky/8.5/isos/x86_64/Rocky-8.5-x86_64-minimal.iso -o $out_dir/rocky.iso
+    curl -L https://download.rockylinux.org/pub/rocky/8.5/isos/x86_64/Rocky-8.5-x86_64-minimal.iso -o $out_dir/rocky.iso
   fi
 }
 
@@ -26,13 +26,13 @@ cleanup() {
 
     [ -f $out_dir/master.img ] && rm -f $out_dir/master.img
 
-    if !$(grep -q 'intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a' /proc/cmdline); then
+    if ! $(grep -q "intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a" /proc/cmdline); then
         echo "Update /proc/cmdline to have, using /boot/grub/grub.cfg"
         echo "intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a"
         exit 0
     fi
 
-    if !$(grep -r -q 'options vfio-pci ids=1c2c:1000,0424:2660,8086:1591,1546:01a9,1374:0001,0424:2514' /etc/modprobe.d); then
+    if ! $(grep -r -q "options vfio-pci ids=1c2c:1000,0424:2660,8086:1591,1546:01a9,1374:0001,0424:2514" /etc/modprobe.d); then
         echo "Modprobe needs to be updated, reboot after creating /etc/modprobe.d/vfio.conf with the following information"
         echo "echo 'options vfio-pci ids=1c2c:1000,0424:2660,8086:1591,1546:01a9,1374:0001,0424:2514' > /etc/modprobe.d/vfio.conf"
         exit 0
@@ -48,13 +48,14 @@ cleanup() {
     virsh net-define --file $out_dir/rocky-k8s.xml
     virsh net-start rocky-k8s
 
+    DEFAULT_ROUTE=$(ip r show default | awk '{print $5}') $base/ks.tmpl > ks.cfg
     # virsh pool-destroy default
     # virsh pool-create pool-g9.xml
 
-    if ! $(nslookup master.rocky.k8s.local >> /dev/null 2>&1) ; then
-        echo "Please enable dns"
-        exit 0
-    fi
+    while ! $(nslookup master.rocky.k8s.local > /dev/null 2>&1) ; do
+        echo "Waiting for dns"
+        sleep 2
+    done
 }
 
 create_nodes() {
