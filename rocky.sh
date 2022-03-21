@@ -8,6 +8,7 @@ base=$(dirname $(realpath "${BASH_SOURCE[0]}"))
 export LIBVIRT_DEFAULT_URI=qemu:///system
 disk_size="20"
 out_dir=${1:-$base}
+libvirt_net="192.168.123.1"
 
 init() {
   if [ ! -e $out_dir/rocky.iso ] ; then
@@ -52,12 +53,12 @@ cleanup() {
     # virsh pool-destroy default
     # virsh pool-create pool-g9.xml
 
-    while ! $(nslookup master.rocky.k8s.local > /dev/null 2>&1) ; do
+    while ! $(nslookup master.rocky.k8s.local $libvirt_net > /dev/null 2>&1) ; do
         echo "Waiting for dns"
         sleep 2
     done
 
-    node_ip=$(nslookup master.rocky.k8s.local | sed -n 's/Address: \(.*\)/\1/p')
+    node_ip=$(nslookup master.rocky.k8s.local $libvirt_net | sed -n 's/Address: \(.*\)/\1/p')
 }
 
 create_nodes() {
@@ -131,33 +132,40 @@ cleanup
 init
 create_nodes
 
-while ! $(ping -c 1 -W 2 master.rocky.k8s.local >> /dev/null 2>&1) ; do
+while ! $(ping -c 1 -W 2 $node_ip >> /dev/null 2>&1) ; do
     echo "Waiting for Ping"
     sleep 5
 done
 
-while ! $(nc -z master.rocky.k8s.local 22 >> /dev/null 2>&1) ; do
+while ! $(nc -z $node_ip 22 >> /dev/null 2>&1) ; do
     echo "Waiting for SSH"
     sleep 5
 done
 
-sshpass -p123456 scp setup-ice.sh root@master.rocky.k8s.local:/root/setup-ice.sh
-sshpass -p123456 ssh root@master.rocky.k8s.local bash -c "/root/setup-ice.sh unstable"
+cat << EOF > $(out_dir)/ssh-config
+host $node_ip
+	User rocky
+	StrictHostKeyChecking no
+	UserKnownHostsFile /dev/null
+EOF
+
+sshpass -p123456 scp -F $(out_dir)/ssh-config setup-ice.sh root@$node_ip:/root/setup-ice.sh
+sshpass -p123456 ssh -F $(out_dir)/ssh-config root@$node_ip bash -c "/root/setup-ice.sh unstable"
 
 virsh reboot master
 sleep 10
 
-while ! $(ping -c 1 -W 2 master.rocky.k8s.local >> /dev/null 2>&1) ; do
+while ! $(ping -c 1 -W 2 $libvirt_net >> /dev/null 2>&1) ; do
     echo "Waiting for Ping"
     sleep 5
 done
 
-while ! $(nc -z master.rocky.k8s.local 22 >> /dev/null 2>&1) ; do
+while ! $(nc -z $libvirt_net 22 >> /dev/null 2>&1) ; do
     echo "Waiting for SSH"
     sleep 5
 done
-sshpass -p123456 scp provision.sh root@$node_ip:/root/provision.sh
-sshpass -p123456 ssh root@$node_ip bash /root/provision.sh
-sshpass -p123456 scp root@$node_ip:/root/.kube/config $out_dir/k8s-config
+sshpass -p123456 scp -F $(out_dir)/ssh-config provision.sh root@$node_ip:/root/provision.sh
+sshpass -p123456 ssh -F $(out_dir)/ssh-config root@$node_ip bash /root/provision.sh
+sshpass -p123456 scp -F $(out_dir)/ssh-config root@$node_ip:/root/.kube/config $out_dir/k8s-config
 chmod 0600 $out_dir/k8s-config
 echo "KUBECONFIG=$out_dir/k8s-config" > $out_dir/k8s-env
