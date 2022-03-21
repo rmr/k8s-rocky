@@ -25,6 +25,7 @@ cleanup() {
     fi
 
     [ -f $out_dir/master.img ] && rm -f $out_dir/master.img
+    [ -f $out_dir/master.raw ] && rm -f $out_dir/master.raw
 
     if ! $(grep -q "intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a" /proc/cmdline); then
         echo "Update /proc/cmdline to have, using /boot/grub/grub.cfg"
@@ -48,7 +49,6 @@ cleanup() {
     virsh net-define --file $out_dir/rocky-k8s.xml
     virsh net-start rocky-k8s
 
-    DEFAULT_ROUTE=$(ip r show default | awk '{print $5}') $base/ks.tmpl > ks.cfg
     # virsh pool-destroy default
     # virsh pool-create pool-g9.xml
 
@@ -56,6 +56,8 @@ cleanup() {
         echo "Waiting for dns"
         sleep 2
     done
+
+    node_ip=$(nslookup master.rocky.k8s.local | sed -n 's/Address: \(.*\)/\1/p')
 }
 
 create_nodes() {
@@ -154,8 +156,8 @@ while ! $(nc -z master.rocky.k8s.local 22 >> /dev/null 2>&1) ; do
     echo "Waiting for SSH"
     sleep 5
 done
-sshpass -p123456 scp provision.sh root@master.rocky.k8s.local:/root/provision.sh
-sshpass -p123456 ssh root@master.rocky.k8s.local bash /root/provision.sh
-sshpass -p123456 scp root@master.rocky.k8s.local:/root/.kube/config $out_dir/k8s-config
+sshpass -p123456 scp provision.sh root@$node_ip:/root/provision.sh
+sshpass -p123456 ssh root@$node_ip bash /root/provision.sh
+sshpass -p123456 scp root@$node_ip:/root/.kube/config $out_dir/k8s-config
 chmod 0600 $out_dir/k8s-config
 echo "KUBECONFIG=$out_dir/k8s-config" > $out_dir/k8s-env
