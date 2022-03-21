@@ -142,15 +142,15 @@ while ! $(nc -z $node_ip 22 >> /dev/null 2>&1) ; do
     sleep 5
 done
 
-cat << EOF > $(out_dir)/ssh-config
+cat << EOF > $out_dir/ssh-config
 host $node_ip
 	User rocky
 	StrictHostKeyChecking no
 	UserKnownHostsFile /dev/null
 EOF
 
-sshpass -p123456 scp -F $(out_dir)/ssh-config setup-ice.sh root@$node_ip:/root/setup-ice.sh
-sshpass -p123456 ssh -F $(out_dir)/ssh-config root@$node_ip bash -c "/root/setup-ice.sh unstable"
+sshpass -p123456 scp -F $out_dir/ssh-config setup-ice.sh root@$node_ip:/root/setup-ice.sh
+sshpass -p123456 ssh -F $out_dir/ssh-config root@$node_ip bash -c "/root/setup-ice.sh unstable"
 
 virsh reboot master
 sleep 10
@@ -164,8 +164,8 @@ while ! $(nc -z $libvirt_net 22 >> /dev/null 2>&1) ; do
     echo "Waiting for SSH"
     sleep 5
 done
-sshpass -p123456 scp -F $(out_dir)/ssh-config provision.sh root@$node_ip:/root/provision.sh
-sshpass -p123456 ssh -F $(out_dir)/ssh-config root@$node_ip bash /root/provision.sh
-sshpass -p123456 scp -F $(out_dir)/ssh-config root@$node_ip:/root/.kube/config $out_dir/k8s-config
+sshpass -p123456 scp -F $out_dir/ssh-config provision.sh root@$node_ip:/root/provision.sh
+sshpass -p123456 ssh -F $out_dir/ssh-config root@$node_ip bash /root/provision.sh
+sshpass -p123456 scp -F $out_dir/ssh-config root@$node_ip:/root/.kube/config $out_dir/k8s-config
 chmod 0600 $out_dir/k8s-config
 echo "KUBECONFIG=$out_dir/k8s-config" > $out_dir/k8s-env
