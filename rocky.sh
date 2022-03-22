@@ -33,7 +33,7 @@ cleanup() {
         exit 1
     fi
 
-    if ! $(virt-host-validate) ; then
+    if ! $(virt-host-validate > /dev/null 2>&1) ; then
         virt-host-validate
         exit 1
     fi
