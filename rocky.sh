@@ -28,6 +28,21 @@ cleanup() {
     [ -f $out_dir/master.img ] && rm -f $out_dir/master.img
     [ -f $out_dir/master.raw ] && rm -f $out_dir/master.raw
 
+    if ! $(which virt-host-validate > /dev/null 2>&1) ; then
+        echo "Please install libvirt"
+        exit 1
+    fi
+
+    if ! $(virt-host-validate) ; then
+        virt-host-validate
+        exit 1
+    fi
+
+    if ! $(qemu-system-x86_64 -M help | grep -q q35); then
+        echo "Qemu error"
+        exit 1
+    fi
+
     if ! $(grep -q "intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a" /proc/cmdline); then
         echo "Update /proc/cmdline to have, using /boot/grub/grub.cfg"
         echo "intel_iommu=on pci-stub.ids=8086:0b2b vfio-pci.ids=1c2c:1000,8086:6f0a"

@@ -59,4 +59,6 @@ done
 sed -n '/swap/d' /etc/fstab
 systemctl daemon-reload
 
+KUBECONFIG=$(pwd)/k8s-config kubectl label nodes master sts.silicom.com/ptp="true"
+
 sync

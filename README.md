@@ -1,5 +1,8 @@
 # K8S single node installation using rockylinux and libvirt
 This is a repository which installs a simple installtion of k8s in a single node instance of a VM using libvirt. The VM is using PCI passthrough on the devices.
+* Downloads and builds either the unsupported or stable version of the sourceforge ice driver
+* Creates a one-shot systemd service file to insmod of the out-of-tree driver
+* Installs a k8s, flannel, coredns
 
 ## Create node
 `./rocky.sh`
