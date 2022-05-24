@@ -5,7 +5,7 @@ set -xe
 export HOME=/root
 export KUBECONFIG=/etc/kubernetes/admin.conf
 export no_proxy=$no_proxy,.svc,.svc.cluster.local
-
+export KUBECONFIG=$(pwd)/k8s-config
 export VERSION=1.23:1.23.0
 export OS=CentOS_8_Stream
 
@@ -15,7 +15,7 @@ curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo "https://downl
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo"
 
 yum install -y cri-o kubelet kubeadm kubectl --disableexcludes=kubernetes
-yum install -y kernel-devel-$(uname -r)
+yum install -y podman git make kernel-devel-$(uname -r)
 
 systemctl daemon-reload
 systemctl enable kubelet
@@ -40,7 +40,6 @@ chown $(id -u):$(id -g) /root/.kube/config
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
 kubectl version -o json
-# kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 curl -sL https://github.com/derailed/k9s/releases/download/v0.25.18/k9s_Linux_x86_64.tar.gz -o /tmp/k9s.tar.gz
 tar xvf /tmp/k9s.tar.gz
@@ -59,6 +58,7 @@ done
 sed -n '/swap/d' /etc/fstab
 systemctl daemon-reload
 
-KUBECONFIG=$(pwd)/k8s-config kubectl label nodes master sts.silicom.com/ptp="true"
+kubectl label nodes master sts.silicom.com/ptp="true"
+kubectl label nodes master fpga.silicom.dk/dfl="true"
 
 sync

@@ -17,3 +17,18 @@ Following the successful installation of the node, the kubeconfig file will be c
 
 `KUBECONFIG=$(pwd)/k8s-config kubectl cluster-info`
 
+`virsh list`
+
+### Passthrough DFL card
+virsh attach-device --file dfl/pci-passthrough-g9.xml
+
+### Passthrough STS card
+virsh attach-device --file dfl/pci-passthrough-g9.xml
+
+### Run OPAE
+ssh root@192.168.123.2
+podman run --rm -it --privileged -v /dev:/dev quay.io/silicom/opae-runtime:2.1.0-1 fpgainfo bmc
+
+### Update fw with OPAE
+scp fw.img root@192.168.123.2:/root
+podman run --rm -it --privileged -v /dev:/dev -v /root:/root quay.io/silicom/opae-runtime:2.1.0-1 fpgasupdate /root/fw.img
