@@ -23,7 +23,7 @@ Following the successful installation of the node, the kubeconfig file will be c
 virsh attach-device --file dfl/pci-passthrough-g9.xml
 
 ### Passthrough STS card
-virsh attach-device --file dfl/pci-passthrough-g9.xml
+virsh attach-device --file sts/pci-passthrough-g9.xml
 
 ### Run OPAE
 ssh root@192.168.123.2
