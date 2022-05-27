@@ -165,6 +165,11 @@ while ! $(nc -z $libvirt_net 22 >> /dev/null 2>&1) ; do
     sleep 5
 done
 
+virsh destroy $machine_name
+virsh start $machine_name
+
+sleep 10
+
 curl -sL https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz -o helm.tar.gz
 tar xvf helm.tar.gz
 chmod +x linux-amd64/helm
