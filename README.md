@@ -20,15 +20,26 @@ Following the successful installation of the node, the kubeconfig file will be c
 `virsh list`
 
 ### Passthrough DFL card
-virsh attach-device --file dfl/pci-passthrough-g9.xml
+`virsh attach-device --file dfl/pci-passthrough-g9.xml`
 
 ### Passthrough STS card
-virsh attach-device --file sts/pci-passthrough-g9.xml
+`virsh attach-device --file sts/pci-passthrough-g9.xml`
+
+### Install NFD to label nodes
+`ssh root@192.168.123.2`
+
+`curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.21.2/install.sh | bash -s v0.21.2`
+
+`kubectl create -f https://operatorhub.io/install/nfd-operator.yaml`
+
+`kubectl get csv -n operators`
 
 ### Run OPAE
-ssh root@192.168.123.2
-podman run --rm -it --privileged -v /dev:/dev quay.io/silicom/opae-runtime:2.1.0-1 fpgainfo bmc
+`ssh root@192.168.123.2`
+
+`podman run --rm -it --privileged -v /dev:/dev quay.io/silicom/opae-runtime:2.1.0-1 fpgainfo bmc`
 
 ### Update fw with OPAE
-scp fw.img root@192.168.123.2:/root
-podman run --rm -it --privileged -v /dev:/dev -v /root:/root quay.io/silicom/opae-runtime:2.1.0-1 fpgasupdate /root/fw.img
+`scp fw.img root@192.168.123.2:/root`
+
+`podman run --rm -it --privileged -v /dev:/dev -v /root:/root quay.io/silicom/opae-runtime:2.1.0-1 fpgasupdate /root/fw.img`
