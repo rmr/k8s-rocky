@@ -16,7 +16,7 @@ yum install -y cri-o kubelet kubeadm kubectl --disableexcludes=kubernetes
 yum install -y podman libxml2 git make kernel-devel-$(uname -r)
 
 swapoff -a
-sed -n '/swap/d' /etc/fstab
+sed -in '/swap/d' /etc/fstab
 
 systemctl daemon-reload
 systemctl enable kubelet
