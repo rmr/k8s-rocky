@@ -9,19 +9,19 @@ export KUBECONFIG=$(pwd)/k8s-config
 export VERSION=1.23:1.23.0
 export OS=CentOS_8_Stream
 
-cat /lib/systemd/system/ice-driver.service
-
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo"
 curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo"
 
 yum install -y cri-o kubelet kubeadm kubectl --disableexcludes=kubernetes
-yum install -y podman git make kernel-devel-$(uname -r)
+yum install -y podman libxml2 git make kernel-devel-$(uname -r)
+
+swapoff -a
+sed -n '/swap/d' /etc/fstab
 
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl enable crio
 systemctl start crio
-swapoff -a
 
 kubeadm config images pull
 
@@ -55,7 +55,6 @@ while ! $(kubectl get nodes | grep -q Ready); do
     logger "Waiting for kubctl"
 done
 
-sed -n '/swap/d' /etc/fstab
 systemctl daemon-reload
 
 kubectl label nodes master sts.silicom.com/ptp="true"
