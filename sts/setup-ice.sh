@@ -4,10 +4,6 @@ set -xe
 
 build_version=${1:-"stable"}
 
-if $(which yum > /dev/null 2>&1) ; then
-    yum install -y gcc libxml2
-fi
-
 url=$(curl -sL 'https://sourceforge.net/projects/e1000/rss?path=/ice%20stable' | xmllint --xpath '//item/link[contains(text(),"tar.gz")]/text()' - | sed 's/download/download\n/g' | sort | tail -n1)
 if [ $build_version != "stable" ] ; then
     url=$(curl -sL 'https://sourceforge.net/projects/e1000/rss?path=/unsupported/ice%20unsupported' | xmllint --xpath '//item/link[contains(text(),"tar.gz")]/text()' - | sed 's/download/download\n/g' | sort | tail -n1)
