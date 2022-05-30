@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: opae-daemonset
+  labels:
+    app: opae
+spec:
+  selector:
+    matchLabels:
+      app: opae
+  template:
+    metadata:
+      labels:
+        app: opae
+    spec:
+      nodeSelector:
+        fpga.silicom.dk/dfl: "true"
+      initContainers:
+      - name: dfl-check
+        command: ["/bin/bash"]
+        args: ["-c", "stat /dev/dfl-port.0"]
+      containers:
+      - name: opae
+        image: quay.io/silicom/opae-runtime:2.1.0-1
+        command: ["/bin/bash"]
+        args: ["-c", "while true ; do ; fpgainfo bmc; sleep 30; done"]
+      volumeMounts:
+      - name: devfs
+        mountPath: /dev
+      securityContext:
+        privileged: true
+      resources:
+        limits:
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 200Mi
+    volumes:
+      - name:  devfs
+        hostPath:
+          path: /dev
