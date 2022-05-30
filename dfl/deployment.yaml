@@ -1,3 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dfl-build
+  labels:
+    app: dfl-build
+data:
+  build.sh: |
+    #!/bin/sh
+
+    if [ ! -e /dev/dfl* ] ; then
+      sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+      sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
+      export KERNEL=$(basename /usr/src/kernels/${1}*)
+      export KERNELDIR=/lib/modules/$KERNEL/build
+      mkdir -p /lib/modules/$KERNEL
+      ln -s /usr/src/kernels/$KERNEL /lib/modules/$KERNEL/build;
+
+      yum install -y kernel-devel git make gcc elfutils-libelf-devel kmod
+      git clone https://github.com/OPAE/linux-dfl-backport.git
+      cd linux-dfl-backport
+      git checkout n5010/fpga-ofs-dev-5.15-lts
+      make
+      make install
+      make insmod
+    fi
+
+---
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -16,9 +46,10 @@ spec:
       nodeSelector:
         fpga.silicom.dk/dfl: "true"
       initContainers:
-      - name: dfl-check
+      - name: dfl-build
+        image: docker.io/centos:8.4.2105
         command: ["/bin/bash"]
-        args: ["-c", "stat /dev/dfl-port.0"]
+        args: ["-c", "/data/build.sh"]
       containers:
       - name: opae
         image: quay.io/silicom/opae-runtime:2.1.0-1
@@ -27,6 +58,8 @@ spec:
       volumeMounts:
       - name: devfs
         mountPath: /dev
+      - name: dfl-build
+        mountPath: /data
       securityContext:
         privileged: true
       resources:
@@ -39,3 +72,6 @@ spec:
       - name:  devfs
         hostPath:
           path: /dev
+      - name: dfl-build
+        configMap:
+          name:  dfl-build

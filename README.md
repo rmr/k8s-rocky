@@ -43,3 +43,6 @@ Following the successful installation of the node, the kubeconfig file will be c
 `scp fw.img root@192.168.123.2:/root`
 
 `podman run --rm -it --privileged -v /dev:/dev -v /root:/root quay.io/silicom/opae-runtime:2.1.0-1 fpgasupdate /root/fw.img`
+
+### Run k8s deployment
+`kubectl create -f dfl/deployment.yaml`
