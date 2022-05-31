@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Can't be bigger than 2MB, no reason for this... FW in cassino runtime image?
+kubectl create configmap cassino-fw --from-file=file.bin
